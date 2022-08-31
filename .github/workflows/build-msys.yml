@@ -29,7 +29,7 @@ jobs:
           install: git mingw-w64-x86_64-toolchain make autoconf automake libtool
           
       - name: Configure
-        run: cd ompi && automake --add-missing && ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
+        run: cd ompi && autogen.pl # && automake --add-missing && ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
           
       - name: Build
         run: cd ompi && make -j 8 all

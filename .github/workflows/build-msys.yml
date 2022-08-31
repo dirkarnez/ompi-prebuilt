@@ -12,7 +12,6 @@ jobs:
     defaults:
       run:
         shell: msys2 {0}
-        working-directory: win
     env:
       libraryName: ompi
       installationPath: ompi-installation

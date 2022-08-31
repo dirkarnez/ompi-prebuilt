@@ -29,7 +29,7 @@ jobs:
           install: git mingw-w64-x86_64-toolchain make
           
       - name: Configure
-        run: ./configure --prefix="$HOME/${{ env.installationPath }}"
+        run: ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
           
       - name: Build
         run: make -j 8 all
@@ -41,12 +41,12 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
-          directory: "$HOME/${{ env.installationPath }}"
+          directory: "${{ github.workspace }}/${{ env.installationPath }}"
           filename: "${{ env.msysTargetZip }}"
         
       - name: Release prebuilt
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "$HOME/${{ env.installationPath }}/${{ env.msysTargetZip }}"
+          artifacts: "${{ github.workspace }}/${{ env.installationPath }}/${{ env.msysTargetZip }}"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}

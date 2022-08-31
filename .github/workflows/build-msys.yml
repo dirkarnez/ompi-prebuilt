@@ -17,7 +17,7 @@ jobs:
       libraryName: ompi
       installationPath: ompi-installation
       tagName: v4.1.4
-      mingwTargetZip: libredwg-${{ github.ref_name }}-x86_64-posix-seh-rev0-8.1.0.zip
+      msysTargetZip: ompi-${{ github.ref_name }}-msys.zip
     steps:
       - name: git clone
         shell: cmd
@@ -30,10 +30,24 @@ jobs:
           install: git mingw-w64-x86_64-toolchain make
           
       - name: Configure
-        run: ./configure --prefix=$HOME/${{ env.installationPath }}
+        run: ./configure --prefix="$HOME/${{ env.installationPath }}"
           
       - name: Build
         run: make -j 8 all
         
       - name: Install
         run: make install
+        
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: "$HOME/${{ env.installationPath }}"
+          filename: "${{ env.msysTargetZip }}"
+        
+      - name: Release prebuilt
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "$HOME/${{ env.installationPath }}/${{ env.msysTargetZip }}"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}

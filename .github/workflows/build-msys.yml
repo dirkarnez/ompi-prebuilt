@@ -32,10 +32,10 @@ jobs:
         run: cd ompi && ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
           
       - name: Build
-        run: make -j 8 all
+        run: cd ompi && make -j 8 all
         
       - name: Install
-        run: make install
+        run: cd ompi && make install
         
       - name: Archive Release
         uses: thedoctor0/zip-release@master

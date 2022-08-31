@@ -26,10 +26,10 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git mingw-w64-x86_64-toolchain make
+          install: git mingw-w64-x86_64-toolchain make aclocal autoconf autoheader
           
       - name: Configure
-        run: cd ompi && ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
+        run: cd ompi && automake --add-missing && ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
           
       - name: Build
         run: cd ompi && make -j 8 all

@@ -1,0 +1,39 @@
+  name: msys-prebuilt-release-actions-workflow
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'c*'
+jobs:
+  build:
+    name: Create Release
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: msys2 {0}
+        working-directory: win
+    env:
+      libraryName: ompi
+      installationPath: ompi-installation
+      tagName: v4.1.4
+      mingwTargetZip: libredwg-${{ github.ref_name }}-x86_64-posix-seh-rev0-8.1.0.zip
+    steps:
+      - name: git clone
+        shell: cmd
+        run: git clone --recursive https://github.com/open-mpi/ompi.git && cd ompi && git checkout ${{ env.tagName }}
+        
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: git mingw-w64-x86_64-toolchain make
+          
+      - name: Configure
+        run: ./configure --prefix=$HOME/${{ env.installationPath }}
+          
+      - name: Build
+        run: make -j 8 all
+        
+      - name: Install
+        run: make install

@@ -1,4 +1,4 @@
-name: msys-prebuilt-release-actions-workflow
+name: cpp-cmake-mingw-prebuilt-release-actions-workflow
 on:
   push:
     # Sequence of patterns matched against refs/tags
@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Create Release
-    runs-on: windows-2022
+    runs-on: windows-latest
     defaults:
       run:
         shell: msys2 {0}
@@ -16,37 +16,50 @@ jobs:
       libraryName: ompi
       installationPath: ompi-installation
       tagName: v4.1.4
-      msysTargetZip: ompi-${{ github.ref_name }}-msys.zip
+      mingwTargetZip: ompi-${{ github.ref_name }}-mingw64-x86_64-posix-seh-rev0-8.1.0.zip
     steps:
-      - name: git clone
-        shell: cmd
-        run: git clone --recursive https://github.com/open-mpi/ompi.git && cd ompi && git checkout ${{ env.tagName }}
-        
+      - shell: cmd
+        run: |
+          curl https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.4.tar.gz --output openmpi-4.1.4.tar.gz &&^
+          tar -xvf openmpi-4.1.4.tar.gz &&^
+          cd openmpi-4.1.4 &&^
+          dir
+          
       - name: Install MSYS2
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git mingw-w64-x86_64-toolchain make autoconf automake libtool
-          
-      - name: Configure
-        run: cd ompi && ./autogen.pl # && automake --add-missing && ./configure --prefix="${{ github.workspace }}/${{ env.installationPath }}"
-          
-      - name: Build
-        run: cd ompi && make -j 8 all
+          install: make autoconf automake libtool autogen perl
+                 
+      - name: curl x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
+        shell: cmd
+        run:  cd /d ${{ github.workspace }} && curl https://github.com/2641797006/c/blob/master/GCC-zip/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z?raw=true -L --output x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z && dir && 7z.exe x x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z
         
-      - name: Install
-        run: cd ompi && make install
-        
+      - name: curl cmake-3.24.0-windows-x86_64.zip
+        shell: cmd
+        run: cd /d ${{ github.workspace }} && curl https://github.com/Kitware/CMake/releases/download/v3.24.0/cmake-3.24.0-windows-x86_64.zip -L --output cmake-3.24.0-windows-x86_64.zip && dir && 7z.exe x cmake-3.24.0-windows-x86_64.zip
+      
+      - name: set PATH, check mingw version, cmake generate, build and install
+        shell: msys2 {0}
+        run: |
+          workspace=$(pwd) &&
+          mv "openmpi-4.1.4" "openmpi" && 
+          cd openmpi && 
+          export PATH="$workspace/mingw64:$workspace/mingw64/bin:$workspace/msys64/usr/bin:/usr/bin" &&
+          g++ --version && 
+          ./configure --prefix="$(pwd)/${{ env.installationPath }}" &&
+          make && make install
+            
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
-          directory: "${{ github.workspace }}/${{ env.installationPath }}"
-          filename: "${{ env.msysTargetZip }}"
+          directory: "openmpi/${{ env.installationPath }}"
+          filename: "${{ env.mingwTargetZip }}"
         
       - name: Release prebuilt
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ github.workspace }}/${{ env.installationPath }}/${{ env.msysTargetZip }}"
+          artifacts: "openmpi/${{ env.installationPath }}/${{ env.mingwTargetZip }}"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
